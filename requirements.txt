@@ -1,0 +1,3 @@
+streamlit
+xlrd
+pandas

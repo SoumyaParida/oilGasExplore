@@ -6,6 +6,8 @@ from datetime import datetime
 import csv
 import os
 import traceback as tb
+from io import BytesIO
+from openpyxl import load_workbook
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -22,14 +24,26 @@ def pull_files_and_create_master_df(base_url, dates):
     master_df = pd.DataFrame()
     try:
         for date in dates:
-            file_url = f"{base_url}{date}.xlsx"
+            file_url = f"{base_url}{date}.xlsx"  # Assuming files are .xlsx
             response = requests.get(file_url)
-            workbook = xlrd.open_workbook(file_contents=response.content)
-            worksheet = workbook.sheet_by_index(0)
             
-            # Process the worksheet into a pandas DataFrame
-            rows = [worksheet.row_values(row_idx) for row_idx in range(worksheet.nrows)]
-            df = pd.DataFrame(rows[1:], columns=rows[0])  # First row as header
+            # Check if the file is .xlsx (openpyxl) or .xls (xlrd)
+            if file_url.endswith(".xlsx"):
+                # Use openpyxl for .xlsx files
+                workbook = load_workbook(filename=BytesIO(response.content))
+                sheet = workbook.active
+                rows = list(sheet.iter_rows(values_only=True))
+                df = pd.DataFrame(rows[1:], columns=rows[0])  # First row as header
+            elif file_url.endswith(".xls"):
+                # Use xlrd for .xls files
+                workbook = xlrd.open_workbook(file_contents=response.content)
+                worksheet = workbook.sheet_by_index(0)
+                rows = [worksheet.row_values(row_idx) for row_idx in range(worksheet.nrows)]
+                df = pd.DataFrame(rows[1:], columns=rows[0])  # First row as header
+            else:
+                raise ValueError(f"Unsupported file format for URL: {file_url}")
+            
+            # Append the data to the master DataFrame
             master_df = pd.concat([master_df, df], ignore_index=True)
     except Exception as e:
         st.error(f"Error fetching data: {str(e)}")

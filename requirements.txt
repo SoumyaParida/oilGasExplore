@@ -2,3 +2,4 @@ streamlit
 xlrd
 pandas
 openpyxl
+lxml

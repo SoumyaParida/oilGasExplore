@@ -10,6 +10,7 @@ from io import BytesIO
 from openpyxl import load_workbook
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import lxml
 
 # Define the URLs for the select options
 URL_OPTIONS = {
@@ -71,13 +72,13 @@ def texas_data(startMonth, startYear, endMonth, endYear, county_code):
     suggest = s.get('http://webapps.rrc.state.tx.us/PDQ/generalReportAction.do')
     JSESSIONID = s.cookies.get("JSESSIONID")
 
-    print("JSESSIONID",JSESSIONID)
-    print("cookies",s.cookies)
+    print("JSESSIONID", JSESSIONID)
+    print("cookies", s.cookies)
 
     cookies = {
         '_ga': 'GA1.3.1330622583.1681476442',
         '_gid': 'GA1.3.910762609.1681476442',
-        'JSESSIONID': JSESSIONID, ## get this fresh session id
+        'JSESSIONID': JSESSIONID,  ## get this fresh session id
     }
 
     headers = {
@@ -117,8 +118,8 @@ def texas_data(startMonth, startYear, endMonth, endYear, county_code):
     verify = False
 
     months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-    year = ['2022','2023']
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    year = ['2022', '2023']
 
     response = requests.post(
         'http://webapps.rrc.state.tx.us/PDQ/mainReportAction.do',
@@ -130,9 +131,10 @@ def texas_data(startMonth, startYear, endMonth, endYear, county_code):
 
     print(response.status_code)
 
-    df = pd.read_html(response.text)
+    # Use lxml for parsing HTML tables
+    df = pd.read_html(response.text, flavor='lxml')
 
-    print(df[12])
+    #print(df[12])
     return df[12]
 
 # Streamlit UI
